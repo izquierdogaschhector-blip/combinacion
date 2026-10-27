@@ -186,6 +186,23 @@ with st.sidebar:
         'Proveedor',
         ['Twelve Data API', 'Yahoo Finance', 'Cargar CSV propio']
     )
+    
+    auto_refresh = False
+    refresh_count = 0
+
+    if source_choice == 'Twelve Data API':
+        auto_refresh = st.checkbox(
+            'Actualizar automáticamente cada 60 segundos',
+            value=False
+        )
+
+        if auto_refresh:
+            from streamlit_autorefresh import st_autorefresh
+            refresh_count = st_autorefresh(
+                interval=60_000,
+                key='market_auto_refresh'
+            )
+
 
     twelve_key = st.text_input(
         'API key Twelve Data',
@@ -233,36 +250,109 @@ with st.sidebar:
         st.info(diagnosticar_telegram())
 
 
-if run:
+refresh_due = (
+    auto_refresh
+    and refresh_count > 0
+    and refresh_count != st.session_state.get(
+        '_last_refresh_count', 0
+    )
+)
+
+if run or refresh_due:
+    if refresh_due:
+        st.session_state['_last_refresh_count'] = refresh_count
+
     try:
         if source_choice == 'Cargar CSV propio':
             if uploaded is None:
                 st.error('Selecciona un CSV OHLC primero.')
                 st.stop()
+
             df = normalize_ohlc(pd.read_csv(uploaded))
-            meta = {'provider':'CSV aportado por usuario','provider_symbol':'custom','requested_asset':asset,'rows':len(df),'latest_timestamp_utc':str(df.timestamp.iloc[-1]),'proxy_note':'La procedencia, calidad y licencia dependen del archivo cargado.'}
+            meta = {
+                'provider': 'CSV aportado por usuario',
+                'provider_symbol': 'custom',
+                'requested_asset': asset,
+                'rows': len(df),
+                'latest_timestamp_utc': str(df.timestamp.iloc[-1]),
+                'proxy_note': 'La procedencia, calidad y licencia dependen del archivo cargado.'
+            }
+
         elif source_choice == 'Twelve Data API':
-            df, meta = download_twelvedata(asset, twelve_key, interval, outputsize)
+            df, meta = download_twelvedata(
+                asset, twelve_key, interval, outputsize
+            )
+
         else:
             df, meta = download_yahoo(asset, period, interval)
+
         featured, market = analyze_market(df)
         quant = summarize_returns(df)
         quality = assess_ohlc_quality(df, interval=interval)
-        store.save_bars(asset, interval, df, str(meta.get('provider','unknown')))
-        st.session_state.df, st.session_state.metadata = featured, meta
+
+        store.save_bars(
+            asset,
+            interval,
+            df,
+            str(meta.get('provider', 'unknown'))
+        )
+
+        st.session_state.df = featured
+        st.session_state.metadata = meta
         st.session_state.quality = quality
-        st.session_state.analysis, st.session_state.quant = market, quant
-        st.session_state.master = combine(market, quant=quant, events=st.session_state.events.to_dict('records'), orderflow=st.session_state.orderflow, data_quality={'rows':len(df),'provider':meta.get('provider'),'quality':quality}, news_items=st.session_state.get('rss_triage', pd.DataFrame()).to_dict('records') if not st.session_state.get('rss_triage', pd.DataFrame()).empty else [])
-        st.session_state.analysis_id = store.save_analysis(asset, interval, str(meta.get('provider','unknown')), meta, market, quant, st.session_state.master, st.session_state.ai_text)
-        store.source_check(str(meta.get('provider','unknown')), 'ok', f'{len(df)} velas; último timestamp {meta.get("latest_timestamp_utc")}')
-        st.success(f'Análisis guardado en historial local. ID: {st.session_state.analysis_id}')
+        st.session_state.analysis = market
+        st.session_state.quant = quant
+
+        st.session_state.master = combine(
+            market,
+            quant=quant,
+            events=st.session_state.events.to_dict('records'),
+            orderflow=st.session_state.orderflow,
+            data_quality={
+                'rows': len(df),
+                'provider': meta.get('provider'),
+                'quality': quality
+            },
+            news_items=(
+                st.session_state.get(
+                    'rss_triage', pd.DataFrame()
+                ).to_dict('records')
+                if not st.session_state.get(
+                    'rss_triage', pd.DataFrame()
+                ).empty
+                else []
+            )
+        )
+
+        if run:
+            st.session_state.analysis_id = store.save_analysis(
+                asset,
+                interval,
+                str(meta.get('provider', 'unknown')),
+                meta,
+                market,
+                quant,
+                st.session_state.master,
+                st.session_state.ai_text
+            )
+
+        store.source_check(
+            str(meta.get('provider', 'unknown')),
+            'ok',
+            f'{len(df)} velas; último timestamp '
+            f'{meta.get("latest_timestamp_utc")}'
+        )
+
+        st.success(
+            f'Análisis actualizado. Última vela: '
+            f'{meta.get("latest_timestamp_utc")}'
+        )
+
     except Exception as exc:
-        store.source_check(source_choice, 'error', str(exc))
-        st.error(f'No se pudo completar la carga: {exc}')
-
-market_tab, master_tab, macro_tab, flow_tab, cot_tab, quant_tab, news_tab, ai_tab, history_tab, sources_tab = st.tabs([
-    'Mercado','Lectura maestra','Macro / Geopolítica','Order Flow','COT / Posicionamiento','Laboratorio cuantitativo','Noticias','IA opcional','Historial y evaluación','Datos / diagnóstico'])
-
+        store.source_check(
+            source_choice, 'error', str(exc)
+        )
+        st.error(f'Error al cargar o analizar los datos: {exc}')
 with market_tab:
     st.subheader('Inteligencia interna del mercado')
     if st.session_state.df is None:
