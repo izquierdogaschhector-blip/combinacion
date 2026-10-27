@@ -90,12 +90,27 @@ if 'df' not in st.session_state:
     st.session_state.rss_triage = pd.DataFrame()
 
 
+
 with st.sidebar:
     st.header('1 · Datos de mercado')
-    asset = st.selectbox('Activo', ['XAUUSD','EURUSD','EURJPY','DXY','US10Y'])
-    interval = st.selectbox('Temporalidad', ['15m','30m','1h','4h','1d'], index=2)
-    period = st.selectbox('Periodo (Yahoo)', ['1mo','3mo','6mo','1y','2y','5y'], index=3)
-    source_choice = st.radio('Proveedor', ['Twelve Data API','Yahoo Finance','Cargar CSV propio'])
+    asset = st.selectbox(
+        'Activo',
+        ['XAUUSD', 'EURUSD', 'EURJPY', 'DXY', 'US10Y']
+    )
+    interval = st.selectbox(
+        'Temporalidad',
+        ['15m', '30m', '1h', '4h', '1d'],
+        index=2
+    )
+    period = st.selectbox(
+        'Periodo (Yahoo)',
+        ['1mo', '3mo', '6mo', '1y', '2y', '5y'],
+        index=3
+    )
+    source_choice = st.radio(
+        'Proveedor',
+        ['Twelve Data API', 'Yahoo Finance', 'Cargar CSV propio']
+    )
 
     twelve_key = st.text_input(
         'API key Twelve Data',
@@ -103,15 +118,42 @@ with st.sidebar:
         type='password'
     )
 
-    outputsize = st.slider('Velas (Twelve Data)', 100, 5000, 500, 100)
+    outputsize = st.slider(
+        'Velas (Twelve Data)',
+        100, 5000, 500, 100
+    )
+
     uploaded = st.file_uploader(
         'CSV OHLC',
         type=['csv'],
         help='Columnas: timestamp, open, high, low, close; volume opcional.'
     )
-    run = st.button('Cargar y analizar', type='primary', use_container_width=True)
+
+    run = st.button(
+        'Cargar y analizar',
+        type='primary',
+        use_container_width=True
+    )
+
     st.divider()
-    st.caption('Las claves se leen desde la sesión o desde tu .env local. No compartas ese archivo.')
+    st.caption(
+        'Las claves se leen desde la sesión o desde tu .env local. '
+        'No compartas ese archivo.'
+    )
+
+    st.divider()
+    st.subheader('Alertas de Telegram')
+
+    if st.button('Enviar mensaje de prueba', use_container_width=True):
+        exito, mensaje = enviar_mensaje_telegram(
+            'Combinación Maestra: conexión con Telegram comprobada. '
+            'Este es un mensaje de prueba; no se ha ejecutado ninguna operación.'
+        )
+
+        if exito:
+            st.success(mensaje)
+        else:
+            st.error(mensaje)
 
 
 if run:
