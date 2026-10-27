@@ -30,6 +30,8 @@ def enviar_mensaje_telegram(mensaje):
 
     token = leer_secreto("TELEGRAM_BOT_TOKEN")
     chat_id = leer_secreto("TELEGRAM_CHAT_ID")
+    st.sidebar.write("Tipo de chat:", "grupo/canal" if str(chat_id).startswith("-") else "chat privado")
+    st.sidebar.write("Longitud del identificador:", len(str(chat_id)) if chat_id else 0)
 
     if not token or not chat_id:
         return False, "Faltan las credenciales de Telegram en Secrets."
