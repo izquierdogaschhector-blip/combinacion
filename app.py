@@ -371,8 +371,6 @@ market_tab, master_tab, macro_tab, flow_tab, cot_tab, quant_tab, news_tab, ai_ta
 ])
 
 with market_tab:
-
-with market_tab:
     st.subheader('Inteligencia interna del mercado')
     if st.session_state.df is None:
         st.info('Carga datos desde la barra lateral o usa el CSV de ejemplo de la carpeta data/.')
