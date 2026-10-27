@@ -68,6 +68,60 @@ def enviar_mensaje_telegram(mensaje):
             "No se pudo conectar con Telegram. "
             "Comprueba la conexión."
         )
+        
+def diagnosticar_telegram():
+    import requests
+
+    token = leer_secreto("TELEGRAM_BOT_TOKEN")
+    chat_id = leer_secreto("TELEGRAM_CHAT_ID")
+
+    if not token or not chat_id:
+        return "Faltan credenciales en Secrets."
+
+    base = f"https://api.telegram.org/bot{token}"
+
+    try:
+        bot_resp = requests.get(
+            f"{base}/getMe", timeout=15
+        )
+        bot_data = bot_resp.json()
+
+        if not bot_resp.ok or not bot_data.get("ok"):
+            return "No se pudo verificar el bot. Revisa el token."
+
+        bot = bot_data["result"]
+
+        chat_resp = requests.get(
+            f"{base}/getChat",
+            params={"chat_id": str(chat_id).strip()},
+            timeout=15
+        )
+        chat_data = chat_resp.json()
+
+        if not chat_resp.ok or not chat_data.get("ok"):
+            return (
+                "Bot verificado: @" + bot.get("username", "sin_usuario")
+                + ". No se pudo consultar el chat: "
+                + str(chat_data.get("description", "error desconocido"))
+            )
+
+        chat = chat_data["result"]
+        mismo_id = str(bot["id"]) == str(chat.get("id"))
+
+        return (
+            "Bot que usa la aplicación: @"
+            + bot.get("username", "sin_usuario")
+            + " | Destino consultado: "
+            + chat.get("type", "tipo desconocido")
+            + " | Usuario destino: @"
+            + chat.get("username", "sin_usuario")
+            + " | El destino es el propio bot: "
+            + ("Sí" if mismo_id else "No")
+        )
+
+    except Exception:
+        return "No se pudo completar el diagnóstico de Telegram."
+
 
 
 
@@ -175,6 +229,8 @@ with st.sidebar:
             st.success(mensaje)
         else:
             st.error(mensaje)
+    if st.button('Diagnosticar Telegram', use_container_width=True):
+        st.info(diagnosticar_telegram())
 
 
 if run:
