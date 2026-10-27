@@ -24,17 +24,17 @@ def leer_secreto(nombre, valor_predeterminado=""):
     return os.getenv(nombre, valor_predeterminado)
     
 
+
 def enviar_mensaje_telegram(mensaje):
     import requests
 
     token = leer_secreto("TELEGRAM_BOT_TOKEN")
     chat_id = leer_secreto("TELEGRAM_CHAT_ID")
-    if chat_id:
-    chat_id = str(chat_id).strip()
 
     if not token or not chat_id:
         return False, "Faltan las credenciales de Telegram en Secrets."
 
+    chat_id = str(chat_id).strip()
     url = f"https://api.telegram.org/bot{token}/sendMessage"
 
     try:
@@ -56,27 +56,17 @@ def enviar_mensaje_telegram(mensaje):
             return True, "Mensaje enviado correctamente a Telegram."
 
         codigo = datos.get("error_code", respuesta.status_code)
-        descripcion = datos.get("description", "Motivo desconocido")
+        descripcion = datos.get(
+            "description", "Motivo desconocido"
+        )
         return False, f"Error de Telegram {codigo}: {descripcion}"
 
     except requests.RequestException:
-        return False, "No se pudo conectar con Telegram. Comprueba la conexión."
-
-
-    try:
-        respuesta = requests.post(
-            url,
-            data={"chat_id": chat_id, "text": mensaje},
-            timeout=15
+        return False, (
+            "No se pudo conectar con Telegram. "
+            "Comprueba la conexión."
         )
-        datos = respuesta.json()
 
-        if respuesta.ok and datos.get("ok"):
-            return True, "Mensaje enviado correctamente a Telegram."
-
-        return False, "Telegram rechazó el mensaje. Revisa la configuración."
-    except Exception:
-        return False, "No se pudo conectar con Telegram."
 
 
 from combination.data import download_yahoo, normalize_ohlc
