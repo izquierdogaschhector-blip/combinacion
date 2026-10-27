@@ -1,0 +1,25 @@
+COMBINACIÓN MAESTRA V6.0 — INICIO RÁPIDO
+
+1) Descomprime este ZIP en una carpeta normal.
+2) Instala Python 3.11 o 3.12 si aún no lo tienes.
+3) Windows: doble clic en INICIAR_WINDOWS.bat.
+   macOS/Linux: abre Terminal en esta carpeta y ejecuta:
+      chmod +x INICIAR_MAC_LINUX.sh
+      ./INICIAR_MAC_LINUX.sh
+4) En la aplicación, elige Twelve Data, Yahoo Finance o CSV OHLC y pulsa Cargar y analizar.
+5) Para Twelve Data, introduce tu API key. No está incluida en el ZIP.
+6) Revisa Lectura maestra para ver escenarios y contradicciones.
+7) Usa Macro/Geopolítica para guardar eventos, Order Flow para importar ticks con side o bid/ask, y COT para cargar el CSV oficial de la CFTC.
+8) En Laboratorio cuantitativo puedes probar el baseline y una simulación sintética claramente etiquetada.
+9) El historial se guarda localmente en data/combinacion_maestra.sqlite3.
+
+DEMO SIN DATOS REALES
+- data/ejemplo_sintetico_NO_REAL.csv: velas sintéticas, no usar para trading.
+- data/ejemplo_ticks_sinteticos_NO_REAL.csv: operaciones sintéticas, solo para probar el importador.
+
+SEGURIDAD
+- No compartas el archivo .env ni claves API.
+- La app no ejecuta órdenes.
+- La puntuación maestra no es una probabilidad calibrada.
+- El Order Flow refleja solo el feed importado, no todo XAUUSD OTC.
+- COT es semanal; no equivale a flujo intradía.

@@ -1,0 +1,6 @@
+COMBINACIÓN MAESTRA V6.0
+
+Estado: MVP integrado para investigación local.
+Pruebas automáticas: 18 aprobadas en el entorno de construcción.
+No garantizado: disponibilidad de proveedores externos, cobertura de plan/API, ejecución en cada ordenador, precisión predictiva ni ausencia total de errores.
+Requiere del usuario: instalar Python, ejecutar el paquete, aportar API keys y disponer de feeds/planes adecuados para datos restringidos.
