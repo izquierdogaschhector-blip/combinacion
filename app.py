@@ -11,6 +11,18 @@ sys.path.insert(0, str(Path(__file__).parent / 'src'))
 import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
+
+def leer_secreto(nombre, valor_predeterminado=""):
+    """Lee un secreto de Streamlit Cloud o, como alternativa, del entorno local."""
+    try:
+        valor = st.secrets.get(nombre, valor_predeterminado)
+        if valor:
+            return str(valor)
+    except Exception:
+        pass
+
+    return os.getenv(nombre, valor_predeterminado)
+
 from combination.data import download_yahoo, normalize_ohlc
 from combination.providers import download_twelvedata
 from combination.ai_analysis import analyze_with_ai
@@ -50,18 +62,30 @@ if 'df' not in st.session_state:
     st.session_state.rss_items = pd.DataFrame()
     st.session_state.rss_triage = pd.DataFrame()
 
+
 with st.sidebar:
     st.header('1 · Datos de mercado')
     asset = st.selectbox('Activo', ['XAUUSD','EURUSD','EURJPY','DXY','US10Y'])
     interval = st.selectbox('Temporalidad', ['15m','30m','1h','4h','1d'], index=2)
     period = st.selectbox('Periodo (Yahoo)', ['1mo','3mo','6mo','1y','2y','5y'], index=3)
     source_choice = st.radio('Proveedor', ['Twelve Data API','Yahoo Finance','Cargar CSV propio'])
-    twelve_key = st.text_input('API key Twelve Data', value=os.getenv('TWELVEDATA_API_KEY',''), type='password')
+
+    twelve_key = st.text_input(
+        'API key Twelve Data',
+        value=leer_secreto('TWELVEDATA_API_KEY'),
+        type='password'
+    )
+
     outputsize = st.slider('Velas (Twelve Data)', 100, 5000, 500, 100)
-    uploaded = st.file_uploader('CSV OHLC', type=['csv'], help='Columnas: timestamp, open, high, low, close; volume opcional.')
+    uploaded = st.file_uploader(
+        'CSV OHLC',
+        type=['csv'],
+        help='Columnas: timestamp, open, high, low, close; volume opcional.'
+    )
     run = st.button('Cargar y analizar', type='primary', use_container_width=True)
     st.divider()
     st.caption('Las claves se leen desde la sesión o desde tu .env local. No compartas ese archivo.')
+
 
 if run:
     try:
