@@ -353,6 +353,18 @@ if run or refresh_due:
             source_choice, 'error', str(exc)
         )
         st.error(f'Error al cargar o analizar los datos: {exc}')
+        market_tab, master_tab, macro_tab, flow_tab, cot_tab, quant_tab, news_tab, ai_tab, history_tab, sources_tab = st.tabs([
+    'Mercado',
+    'Motor maestro',
+    'Macro y geopolítica',
+    'Order Flow',
+    'COT',
+    'Laboratorio cuantitativo',
+    'Noticias',
+    'Análisis IA',
+    'Historial',
+    'Fuentes y calidad'
+])
 with market_tab:
     st.subheader('Inteligencia interna del mercado')
     if st.session_state.df is None:
